@@ -172,11 +172,7 @@ app.get('/scrape', async (c) => {
     return c.json({
       error: errorMessage,
       details: error.message || 'Unknown error'
-<<<<<<< HEAD
-    }, statusCode as any);
-=======
     }, statusCode as 403 | 404 | 422 | 500 | 504);
->>>>>>> vercel2-jacob-try-boogaloo
   }
 });
 
