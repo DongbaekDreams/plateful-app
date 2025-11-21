@@ -1,11 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/api/*.ts": {
-      "maxDuration": 30
-    }
-  },
   "installCommand": "npm install",
   "buildCommand": "tsc",
-  "outputDirectory": "dist"
+  "functions": {
+    "api/*.ts": {
+      "maxDuration": 30
+    }
+  }
 }
