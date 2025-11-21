@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci --workspaces --include-workspace-root",
   "buildCommand": "node build-api.js",
+  "git": {
+    "deploymentEnabled": false
+  },
   "functions": {
     "api/*.ts": {
       "maxDuration": 30
