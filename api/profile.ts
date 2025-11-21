@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { getContainer, isCosmosAvailable } from '../lib/cosmos';
-import type { FoodProfile } from '../../packages/shared/src/types/user';
+import type { FoodProfile } from '../types/user';
 
 const app = new Hono();
 

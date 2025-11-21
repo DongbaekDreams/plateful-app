@@ -4,7 +4,7 @@ import { getContainer, generateId, isCosmosAvailable } from '../lib/cosmos';
 import { searchYouTubeTutorials } from '../services/youtube-search';
 import { searchWrittenTutorials } from '../services/tutorial-search';
 import { scrapeTutorialContent } from '../services/tutorial-scraper';
-import type { Tutorial, SavedTutorial, TutorialType, YouTubeTutorial, WrittenTutorial } from '../../packages/shared/src/types/tutorial';
+import type { Tutorial, SavedTutorial, TutorialType, YouTubeTutorial, WrittenTutorial } from '../types/tutorial';
 
 const app = new Hono();
 
@@ -172,11 +172,7 @@ app.get('/scrape', async (c) => {
     return c.json({
       error: errorMessage,
       details: error.message || 'Unknown error'
-<<<<<<< HEAD
-    }, statusCode as any);
-=======
     }, statusCode as 403 | 404 | 422 | 500 | 504);
->>>>>>> vercel2-jacob-try-boogaloo
   }
 });
 

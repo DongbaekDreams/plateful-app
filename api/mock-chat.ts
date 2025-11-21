@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { v4 as uuidv4 } from 'uuid';
 import Anthropic from '@anthropic-ai/sdk';
-import type { ChatMessage, ChatConversation } from '../../packages/shared/src/types/chat';
+import type { ChatMessage, ChatConversation } from '../types/chat';
 
 const app = new Hono();
 

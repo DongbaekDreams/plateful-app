@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { ChatMessage } from '../../packages/shared/src/types/chat';
-import type { IntentExtractionResult } from '../../packages/shared/src/types/recipe';
-import type { FoodProfile } from '../../packages/shared/src/types/user';
+import type { ChatMessage } from '../types/chat';
+import type { IntentExtractionResult } from '../types/recipe';
+import type { FoodProfile } from '../types/user';
 
 /**
  * Extract the user's decided dish and generate a search query from the conversation
