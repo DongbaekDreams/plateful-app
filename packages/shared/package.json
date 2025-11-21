@@ -6,7 +6,6 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc",
-    "vercel-build": "echo 'Skipped - handled by root buildCommand'",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
