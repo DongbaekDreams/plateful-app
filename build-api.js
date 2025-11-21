@@ -16,6 +16,8 @@ const servicesSourceDir = path.join(__dirname, 'apps', 'api', 'services');
 const servicesTargetDir = path.join(__dirname, 'services');
 const utilsSourceDir = path.join(__dirname, 'apps', 'api', 'utils');
 const utilsTargetDir = path.join(__dirname, 'utils');
+const typesSourceDir = path.join(__dirname, 'apps', 'api', 'types');
+const typesTargetDir = path.join(__dirname, 'api', 'types');
 const sharedSourceDir = path.join(__dirname, 'packages', 'shared', 'src');
 const sharedTargetDir = path.join(__dirname, 'packages', 'shared', 'src');
 
@@ -72,7 +74,7 @@ function copyRecursive(src, dest) {
 }
 
 // Remove existing directories
-[apiTargetDir, libTargetDir, servicesTargetDir, utilsTargetDir].forEach(dir => {
+[apiTargetDir, libTargetDir, servicesTargetDir, utilsTargetDir, typesTargetDir].forEach(dir => {
   if (fs.existsSync(dir)) {
     console.log(`Removing existing ${path.basename(dir)} directory...`);
     fs.rmSync(dir, { recursive: true, force: true });
@@ -101,6 +103,12 @@ if (fs.existsSync(servicesSourceDir)) {
 if (fs.existsSync(utilsSourceDir)) {
   console.log(`Copying utils from ${utilsSourceDir}...`);
   copyRecursive(utilsSourceDir, utilsTargetDir);
+}
+
+// Copy types directory (needed for local type imports)
+if (fs.existsSync(typesSourceDir)) {
+  console.log(`Copying types from ${typesSourceDir}...`);
+  copyRecursive(typesSourceDir, typesTargetDir);
 }
 
 // Copy shared package
