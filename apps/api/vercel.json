@@ -5,7 +5,10 @@
       "maxDuration": 30
     }
   },
+  "installCommand": "",
   "buildCommand": "",
   "outputDirectory": ".",
-  "installCommand": "npm install"
+  "turbo": {
+    "enabled": false
+  }
 }
