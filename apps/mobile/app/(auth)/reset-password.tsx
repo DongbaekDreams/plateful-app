@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Input } from '@plateful/ui';
 import { resetPassword } from '../../src/services/auth';
-import { isValidEmail } from '@plateful/shared';
+import { isValidEmail } from '../../../packages/shared/src/utils/validation';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');

@@ -12,7 +12,7 @@ import {
   addDoc,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { GroceryItem, GroceryList } from '@plateful/shared';
+import type { GroceryItem, GroceryList } from '../../../packages/shared/src/types/grocery';
 
 const GROCERY_LISTS_COLLECTION = 'groceryLists';
 const GROCERY_ITEMS_COLLECTION = 'groceryItems';

@@ -13,9 +13,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, semanticColors } from '@plateful/shared';
-import type { PantryItem, PantryCategory, CommonIngredient } from '@plateful/shared';
-import { COMMON_INGREDIENTS, getIngredientsByCategory, CATEGORY_NAMES } from '@plateful/shared';
+import { colors, semanticColors } from '../../../packages/shared/src/theme/colors';
+import type { PantryItem, PantryCategory, CommonIngredient } from '../../../packages/shared/src/types/pantry';
+import { COMMON_INGREDIENTS, getIngredientsByCategory, CATEGORY_NAMES } from '../../../packages/shared/src/constants/common-ingredients';
 import Header from '../../src/components/Header';
 import { auth } from '../../src/config/firebase';
 

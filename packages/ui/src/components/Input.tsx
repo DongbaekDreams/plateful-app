@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TextInput, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { allColors as colors } from '@plateful/shared';
+import { allColors as colors } from '../../../shared/src/theme/colors';
 
 interface InputProps {
   value: string;

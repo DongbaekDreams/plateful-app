@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { getContainer, isCosmosAvailable, generateId } from '../lib/cosmos';
-import type { GroceryList, GroceryItem } from '@plateful/shared';
-import { findDuplicates, mergeIdenticalItems } from '@plateful/shared/src/utils/grocery-grouping';
+import type { GroceryList, GroceryItem } from '../../packages/shared/src/types/grocery';
+import { findDuplicates, mergeIdenticalItems } from '../../packages/shared/src/utils/grocery-grouping';
 
 const app = new Hono();
 

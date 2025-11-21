@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { allColors as colors } from '@plateful/shared';
+import { allColors as colors } from '../../../shared/src/theme/colors';
 
 interface ButtonProps {
   title: string;

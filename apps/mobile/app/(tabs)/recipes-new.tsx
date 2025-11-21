@@ -20,8 +20,16 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Recipe, GroceryList, PantryItem, FoodProfile, ScalingWarning, MealTracking } from '@plateful/shared';
-import { colors, semanticColors, parseIngredients, findPantryMatch, extractPortionNumber, scaleIngredient, scaleNutrition, detectCookingConstraints, checkScalingConstraints } from '@plateful/shared';
+import type { Recipe, ScalingWarning } from '../../../packages/shared/src/types/recipe';
+import type { GroceryList } from '../../../packages/shared/src/types/grocery';
+import type { PantryItem } from '../../../packages/shared/src/types/pantry';
+import type { FoodProfile } from '../../../packages/shared/src/types/user';
+import type { MealTracking } from '../../../packages/shared/src/types/meal-tracking';
+import { colors, semanticColors } from '../../../packages/shared/src/theme/colors';
+import { parseIngredients } from '../../../packages/shared/src/utils/ingredient-parser';
+import { findPantryMatch } from '../../../packages/shared/src/constants/common-ingredients';
+import { extractPortionNumber, scaleIngredient, scaleNutrition } from '../../../packages/shared/src/utils/portion-scaling';
+import { detectCookingConstraints, checkScalingConstraints } from '../../../packages/shared/src/utils/cooking-constraints';
 import { auth } from '../../src/config/firebase';
 import { API_BASE } from '../../src/config/api';
 import Header from '../../src/components/Header';

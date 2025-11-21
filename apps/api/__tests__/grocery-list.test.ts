@@ -17,7 +17,7 @@ jest.mock('../lib/cosmos', () => ({
 }));
 
 // Mock the shared utils that grocery API imports
-jest.mock('@plateful/shared/src/utils/grocery-grouping', () => ({
+jest.mock('../../../../packages/shared/src/utils/grocery-grouping', () => ({
   findDuplicates: jest.fn((existingItems: any[], newItems: any[]) => ({
     toMerge: [],
     toAdd: newItems,
@@ -26,9 +26,9 @@ jest.mock('@plateful/shared/src/utils/grocery-grouping', () => ({
 }));
 
 import { getContainer } from '../lib/cosmos';
-import { parseIngredients } from '@plateful/shared/utils/ingredient-parser';
-import { scaleIngredient } from '@plateful/shared/utils/portion-scaling';
-import { findPantryMatch } from '@plateful/shared/utils/pantry-matcher';
+import { parseIngredients } from '../../../../packages/shared/src/utils/ingredient-parser';
+import { scaleIngredient } from '../../../../packages/shared/src/utils/portion-scaling';
+import { findPantryMatch } from '../../../../packages/shared/src/utils/pantry-matcher';
 import groceryRoutes from '../api/grocery';
 
 const app = new Hono<Env>();

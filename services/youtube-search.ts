@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import type { YouTubeTutorial } from '@plateful/shared';
+import type { YouTubeTutorial } from '../../packages/shared/src/types/tutorial';
 
 /**
  * Search for cooking tutorial videos on YouTube

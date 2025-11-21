@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { RecipeData, FoodProfile } from '@plateful/shared';
+import type { RecipeData } from '../../../../packages/shared/src/types/recipe';
+import type { FoodProfile } from '../../../../packages/shared/src/types/user';
 
 /**
  * Format scraped recipe content into structured JSON

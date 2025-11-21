@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@plateful/shared';
+import { colors } from '../../../packages/shared/src/theme/colors';
 import { Text, View, Platform } from 'react-native';
 
 const TabLabel = ({ focused, label }: { focused: boolean; label: string }) => (

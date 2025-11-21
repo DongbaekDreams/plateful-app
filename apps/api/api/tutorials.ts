@@ -4,7 +4,7 @@ import { getContainer, generateId, isCosmosAvailable } from '../lib/cosmos';
 import { searchYouTubeTutorials } from '../services/youtube-search';
 import { searchWrittenTutorials } from '../services/tutorial-search';
 import { scrapeTutorialContent } from '../services/tutorial-scraper';
-import type { Tutorial, SavedTutorial, TutorialType, YouTubeTutorial, WrittenTutorial } from '@plateful/shared';
+import type { Tutorial, SavedTutorial, TutorialType, YouTubeTutorial, WrittenTutorial } from '../../../packages/shared/src/types/tutorial';
 
 const app = new Hono();
 

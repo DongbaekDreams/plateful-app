@@ -15,19 +15,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@plateful/ui';
-import { allColors as colors } from '@plateful/shared';
-import type { ChatMessage, ChatConversation } from '@plateful/shared';
-import type { IntentExtractionResult } from '@plateful/shared';
+import { allColors as colors } from '../../../packages/shared/src/theme/colors';
+import type { ChatMessage, ChatConversation } from '../../../packages/shared/src/types/chat';
+import type { IntentExtractionResult } from '../../../packages/shared/src/types/recipe';
 import { auth } from '../../src/config/firebase';
 import { API_BASE } from '../../src/config/api';
 import Header from '../../src/components/Header';
-
-<<<<<<< HEAD
-// API endpoint - platform aware
-import API_BASE from '../../src/config/api';
-
-=======
->>>>>>> vercel2-jacob-try-boogaloo
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ editingConversationID?: string }>();
   const [conversationID, setConversationID] = useState<string | null>(null);

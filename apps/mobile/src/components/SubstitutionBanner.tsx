@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, semanticColors } from '@plateful/shared';
-import type { IngredientSubstitution } from '@plateful/shared';
+import { colors, semanticColors } from '../../../packages/shared/src/theme/colors';
+import type { IngredientSubstitution } from '../../../packages/shared/src/types/recipe';
 
 interface SubstitutionBannerProps {
   substitutions: IngredientSubstitution[];

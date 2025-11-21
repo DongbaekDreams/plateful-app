@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@plateful/shared';
+import { colors } from '../../../packages/shared/src/theme/colors';
 
 interface PortionSelectorProps {
   portions: number;

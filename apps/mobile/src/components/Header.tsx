@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@plateful/shared';
+import { colors } from '../../../packages/shared/src/theme/colors';
 import ProfileMenu from './ProfileMenu';
 import Logo from './Logo';
 

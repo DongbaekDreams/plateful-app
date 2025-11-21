@@ -1,4 +1,5 @@
-import type { RecipeNutrition, MealTracking, DailyNutritionTotals } from '@plateful/shared';
+import type { RecipeNutrition } from '../../../packages/shared/src/types/recipe';
+import type { MealTracking, DailyNutritionTotals } from '../../../packages/shared/src/types/meal-tracking';
 
 /**
  * Parse nutrition value from string format to number

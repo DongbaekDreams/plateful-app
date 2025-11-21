@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { getContainer, isCosmosAvailable, generateId } from '../lib/cosmos';
-import type { PantryItem } from '@plateful/shared';
+import type { PantryItem } from '../../packages/shared/src/types/pantry';
 
 const app = new Hono();
 

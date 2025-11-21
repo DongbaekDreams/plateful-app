@@ -15,7 +15,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.3",
     "@expo/vector-icons": "^15.0.2",
-    "@plateful/shared": "*",
     "@plateful/ui": "*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-google-signin/google-signin": "^11.0.0",

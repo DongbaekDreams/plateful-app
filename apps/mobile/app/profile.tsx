@@ -18,20 +18,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@plateful/ui';
 import Header from '../src/components/Header';
 import { auth } from '../src/config/firebase';
-<<<<<<< HEAD
-import API_BASE from '../src/config/api';
-=======
 import { API_BASE } from '../src/config/api';
->>>>>>> vercel2-jacob-try-boogaloo
-import type { FoodProfile } from '@plateful/shared';
-import { colors } from '@plateful/shared';
+import type { FoodProfile } from '../../packages/shared/src/types/user';
+import { colors } from '../../packages/shared/src/theme/colors';
 import { Input } from '@plateful/ui';
 import {
   COMMON_LIKES,
   COMMON_DISLIKES,
   COMMON_ALLERGENS,
   COMMON_RESTRICTIONS,
-} from '@plateful/shared';
+} from '../../packages/shared/src/constants/profile-options';
 
 // Comprehensive international timezones grouped by region
 const TIMEZONE_GROUPS = [

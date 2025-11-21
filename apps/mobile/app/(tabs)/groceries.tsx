@@ -13,10 +13,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, semanticColors } from '@plateful/shared';
-import type { GroceryList, GroceryItem, PantryItem, PantryCategory, CommonIngredient } from '@plateful/shared';
-import { findPantryMatch, COMMON_INGREDIENTS, getIngredientsByCategory, CATEGORY_NAMES } from '@plateful/shared';
-import { groupGroceryItems, type GroupedGroceryItems } from '@plateful/shared/src/utils/grocery-grouping';
+import { colors, semanticColors } from '../../../packages/shared/src/theme/colors';
+import type { GroceryList, GroceryItem } from '../../../packages/shared/src/types/grocery';
+import type { PantryItem, PantryCategory, CommonIngredient } from '../../../packages/shared/src/types/pantry';
+import { findPantryMatch, COMMON_INGREDIENTS, getIngredientsByCategory, CATEGORY_NAMES } from '../../../packages/shared/src/constants/common-ingredients';
+import { groupGroceryItems, type GroupedGroceryItems } from '../../../packages/shared/src/utils/grocery-grouping';
 import { ScrollView, TouchableWithoutFeedback } from 'react-native';
 import Header from '../../src/components/Header';
 import { auth } from '../../src/config/firebase';

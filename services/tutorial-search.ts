@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { RecipeSearchResult } from '@plateful/shared';
+import type { RecipeSearchResult } from '../../packages/shared/src/types/recipe';
 
 /**
  * Search for written cooking tutorial articles using Anthropic's web search

@@ -15,8 +15,8 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Tutorial, TutorialType, YouTubeTutorial, WrittenTutorial } from '@plateful/shared';
-import { colors } from '@plateful/shared';
+import type { Tutorial, TutorialType, YouTubeTutorial, WrittenTutorial } from '../../../packages/shared/src/types/tutorial';
+import { colors } from '../../../packages/shared/src/theme/colors';
 import { auth } from '../../src/config/firebase';
 import Header from '../../src/components/Header';
 import API_BASE from '../../src/config/api';

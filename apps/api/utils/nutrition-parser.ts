@@ -1,4 +1,4 @@
-import type { RecipeNutrition } from '@plateful/shared';
+import type { RecipeNutrition } from '../../../../packages/shared/src/types/recipe';
 
 /**
  * Parse nutrition value from string format to number

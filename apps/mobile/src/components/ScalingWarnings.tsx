@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, semanticColors } from '@plateful/shared';
-import type { ScalingWarning } from '@plateful/shared';
+import { colors, semanticColors } from '../../../packages/shared/src/theme/colors';
+import type { ScalingWarning } from '../../../packages/shared/src/types/recipe';
 
 interface ScalingWarningsProps {
   warnings: ScalingWarning[];

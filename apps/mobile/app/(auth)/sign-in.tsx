@@ -15,7 +15,8 @@ const { width: screenWidth } = Dimensions.get('window');
 import { useRouter } from 'expo-router';
 import { Button, Input } from '@plateful/ui';
 import { signInWithEmail } from '../../src/services/auth';
-import { isValidEmail, allColors as colors } from '@plateful/shared';
+import { isValidEmail } from '../../../packages/shared/src/utils/validation';
+import { allColors as colors } from '../../../packages/shared/src/theme/colors';
 import Logo from '../../src/components/Logo';
 
 export default function SignIn() {

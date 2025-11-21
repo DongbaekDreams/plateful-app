@@ -3,8 +3,9 @@ import { handle } from 'hono/vercel';
 import { getContainer, generateId, isCosmosAvailable } from '../lib/cosmos';
 import { calculateMealNutrition } from '../utils/nutrition-parser';
 import { getDateStringInTimezone, getTodayDateString } from '../utils/date-utils';
-import type { MealTracking, DailyNutritionTotals } from '@plateful/shared';
-import type { Recipe, FoodProfile } from '@plateful/shared';
+import type { MealTracking, DailyNutritionTotals } from '../../packages/shared/src/types/meal-tracking';
+import type { Recipe } from '../../packages/shared/src/types/recipe';
+import type { FoodProfile } from '../../packages/shared/src/types/user';
 
 const app = new Hono();
 
