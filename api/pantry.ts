@@ -1,178 +1,256 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
+import { getContainer, isCosmosAvailable, generateId } from '../lib/cosmos';
+import type { PantryItem } from '@plateful/shared';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+const app = new Hono();
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+/**
+ * Health check for pantry route
+ * GET /pantry
+ */
+app.get('/', async (c) => {
+  return c.json({ status: 'ok', service: 'pantry' });
+});
+
+/**
+ * Get all pantry items for a user
+ * GET /pantry/:userID
+ */
+app.get('/:userID', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Pantry service not available' }, 503);
   }
-
-  const { userID, itemId } = req.query;
 
   try {
-    // Handle user-specific pantry items with query parameters
-    if (req.method === 'GET' && userID) {
-      // Mock pantry items for the user
-      const mockPantryItems = [
-        {
-          id: 'pantry-1',
-          userID: userID,
-          name: 'Rice',
-          category: 'Grains',
-          quantity: 2,
-          unit: 'cups',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 'pantry-2',
-          userID: userID,
-          name: 'Olive Oil',
-          category: 'Oils',
-          quantity: 1,
-          unit: 'bottle',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 'pantry-3',
-          userID: userID,
-          name: 'Canned Tomatoes',
-          category: 'Canned Goods',
-          quantity: 3,
-          unit: 'cans',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 'pantry-4',
-          userID: userID,
-          name: 'Garlic',
-          category: 'Vegetables',
-          quantity: 1,
-          unit: 'bulb',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ];
-
-      return res.status(200).json({ items: mockPantryItems });
+    const userID = c.req.param('userID');
+    const container = getContainer('pantries');
+    
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
     }
 
-    // Handle POST to add pantry items with query parameters
-    if (req.method === 'POST' && userID) {
-      const body = req.body;
-      const items = body.items || [];
-      
-      const mockItems = items.map((item: any, index: number) => ({
-        id: 'pantry-' + Date.now() + '-' + index,
-        userID: userID,
-        name: item.name,
-        category: item.category,
-        quantity: item.quantity || 1,
-        unit: item.unit || '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }));
+    // Query all pantry items for this user
+    const { resources } = await container.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.userID = @userID',
+        parameters: [{ name: '@userID', value: userID }],
+      })
+      .fetchAll();
 
-      return res.status(201).json({ 
-        items: mockItems,
-        message: `Added ${mockItems.length} item(s) successfully.`
-      });
-    }
-
-    // Handle DELETE specific pantry item with query parameters
-    if (req.method === 'DELETE' && userID && itemId) {
-      return res.status(200).json({ 
-        success: true,
-        message: `Pantry item ${itemId} deleted successfully for user ${userID}` 
-      });
-    }
-
-    // Handle PUT to update pantry item with query parameters
-    if (req.method === 'PUT' && userID && itemId) {
-      const body = req.body;
-      
-      const mockItem = {
-        id: itemId,
-        userID: userID,
-        name: body.name || 'Updated Item',
-        category: body.category || 'General',
-        quantity: body.quantity || 1,
-        unit: body.unit || '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      return res.status(200).json({ item: mockItem });
-    }
-
-    // Base endpoint for backward compatibility
-    if (req.method === 'GET' && !userID) {
-      // Mock pantry items data
-      const mockPantryItems = [
-        {
-          id: 'pantry-1',
-          userID: 'mock-user-id',
-          name: 'Rice',
-          category: 'Grains',
-          quantity: 2,
-          unit: 'cups',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 'pantry-2',
-          userID: 'mock-user-id',
-          name: 'Olive Oil',
-          category: 'Oils',
-          quantity: 1,
-          unit: 'bottle',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 'pantry-3',
-          userID: 'mock-user-id',
-          name: 'Canned Tomatoes',
-          category: 'Canned Goods',
-          quantity: 3,
-          unit: 'cans',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 'pantry-4',
-          userID: 'mock-user-id',
-          name: 'Garlic',
-          category: 'Vegetables',
-          quantity: 1,
-          unit: 'bulb',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ];
-
-      return res.status(200).json({ items: mockPantryItems });
-    }
-
-    return res.status(400).json({ 
-      error: 'Invalid request parameters',
-      availableActions: [
-        'GET ?userID={id} - Get user pantry items',
-        'POST ?userID={id} - Add pantry items',
-        'PUT ?userID={id}&itemId={id} - Update pantry item',
-        'DELETE ?userID={id}&itemId={id} - Delete pantry item'
-      ]
+    // Sort by category, then name
+    const sortedItems = (resources || []).sort((a, b) => {
+      if (a.category !== b.category) {
+        return a.category.localeCompare(b.category);
+      }
+      return a.name.localeCompare(b.name);
     });
-  } catch (error) {
-    console.error('Pantry API error:', error);
-    return res.status(500).json({ 
-      error: 'Failed to process pantry request',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
+
+    return c.json({ items: sortedItems });
+  } catch (error: any) {
+    console.error('Error fetching pantry items:', error);
+    
+    // If container doesn't exist, return empty array instead of error
+    if (error?.code === 404 || error?.statusCode === 404 || error?.message?.includes('NotFound')) {
+      console.log('Pantry container does not exist yet - returning empty array');
+      return c.json({ items: [] });
+    }
+    
+    return c.json({ 
+      error: 'Failed to fetch pantry items',
+      details: error?.message || 'Unknown error'
+    }, 500);
   }
-}
+});
+
+/**
+ * Add one or more pantry items
+ * POST /pantry/:userID
+ * Body: { items: Array<{ name: string, category: string, quantity?: number, unit?: string }> }
+ */
+app.post('/:userID', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Pantry service not available' }, 503);
+  }
+
+  try {
+    const userID = c.req.param('userID');
+    const body = await c.req.json<{ items: Array<Omit<PantryItem, 'id' | 'userID' | 'createdAt' | 'updatedAt'>> }>();
+    const { items } = body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return c.json({ error: 'Items array is required and cannot be empty' }, 400);
+    }
+
+    const container = getContainer('pantries');
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    const now = new Date().toISOString();
+    const pantryItems: PantryItem[] = items.map(item => ({
+      id: generateId('pantry'),
+      userID,
+      name: item.name.trim(),
+      category: item.category,
+      quantity: item.quantity,
+      unit: item.unit,
+      createdAt: now,
+      updatedAt: now,
+    }));
+
+    // Check for duplicates (same name and user) before adding
+    const { resources: existingItems } = await container.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.userID = @userID',
+        parameters: [{ name: '@userID', value: userID }],
+      })
+      .fetchAll();
+
+    const existingNames = new Set(existingItems.map(item => item.name.toLowerCase()));
+    const newItems: PantryItem[] = [];
+    const duplicates: string[] = [];
+
+    pantryItems.forEach(item => {
+      if (existingNames.has(item.name.toLowerCase())) {
+        duplicates.push(item.name);
+      } else {
+        newItems.push(item);
+      }
+    });
+
+    // Insert new items
+    if (newItems.length > 0) {
+      await Promise.all(newItems.map(item => container.items.create(item)));
+    }
+
+    return c.json({
+      items: newItems,
+      duplicates: duplicates.length > 0 ? duplicates : undefined,
+      message: duplicates.length > 0 
+        ? `Added ${newItems.length} item(s). ${duplicates.length} duplicate(s) skipped.`
+        : `Added ${newItems.length} item(s) successfully.`
+    }, 201);
+  } catch (error: any) {
+    console.error('Error adding pantry items:', error);
+    
+    // Provide more detailed error message
+    const errorMessage = error?.message || 'Unknown error';
+    if (errorMessage.includes('NotFound') || error?.code === 404) {
+      return c.json({ 
+        error: 'Pantry container does not exist. Please create the "pantries" container in Cosmos DB with partition key /userID.',
+        details: errorMessage
+      }, 503);
+    }
+    
+    return c.json({ 
+      error: 'Failed to add pantry items',
+      details: errorMessage
+    }, 500);
+  }
+});
+
+/**
+ * Update a pantry item
+ * PUT /pantry/:userID/:itemId
+ */
+app.put('/:userID/:itemId', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Pantry service not available' }, 503);
+  }
+
+  try {
+    const userID = c.req.param('userID');
+    const itemId = c.req.param('itemId');
+    const body = await c.req.json<Partial<Omit<PantryItem, 'id' | 'userID' | 'createdAt'>>>();
+    
+    const container = getContainer('pantries');
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    // Get existing item to verify ownership
+    let existingItem: PantryItem;
+    try {
+      const { resource } = await container.item(itemId, userID).read<PantryItem>();
+      if (!resource) {
+        return c.json({ error: 'Pantry item not found' }, 404);
+      }
+      existingItem = resource;
+    } catch (error: any) {
+      if (error?.code === 404 || error?.statusCode === 404) {
+        return c.json({ error: 'Pantry item not found' }, 404);
+      }
+      throw error;
+    }
+
+    // Verify ownership
+    if (existingItem.userID !== userID) {
+      return c.json({ error: 'Unauthorized' }, 403);
+    }
+
+    // Update item
+    const updatedItem: PantryItem = {
+      ...existingItem,
+      ...body,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await container.items.upsert(updatedItem);
+
+    return c.json({ item: updatedItem });
+  } catch (error) {
+    console.error('Error updating pantry item:', error);
+    return c.json({ error: 'Failed to update pantry item' }, 500);
+  }
+});
+
+/**
+ * Delete a pantry item
+ * DELETE /pantry/:userID/:itemId
+ */
+app.delete('/:userID/:itemId', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Pantry service not available' }, 503);
+  }
+
+  try {
+    const userID = c.req.param('userID');
+    const itemId = c.req.param('itemId');
+    
+    const container = getContainer('pantries');
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    // Verify ownership before deleting
+    try {
+      const { resource } = await container.item(itemId, userID).read<PantryItem>();
+      if (!resource) {
+        return c.json({ error: 'Pantry item not found' }, 404);
+      }
+      if (resource.userID !== userID) {
+        return c.json({ error: 'Unauthorized' }, 403);
+      }
+    } catch (error: any) {
+      if (error?.code === 404 || error?.statusCode === 404) {
+        return c.json({ error: 'Pantry item not found' }, 404);
+      }
+      throw error;
+    }
+
+    await container.item(itemId, userID).delete();
+
+    return c.json({ message: 'Pantry item deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting pantry item:', error);
+    return c.json({ error: 'Failed to delete pantry item' }, 500);
+  }
+});
+
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
+

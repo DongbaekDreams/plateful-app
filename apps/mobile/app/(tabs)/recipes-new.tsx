@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Recipe, GroceryList, PantryItem, FoodProfile, ScalingWarning, MealTracking } from '@plateful/shared';
 import { colors, semanticColors, parseIngredients, findPantryMatch, extractPortionNumber, scaleIngredient, scaleNutrition, detectCookingConstraints, checkScalingConstraints } from '@plateful/shared';
 import { auth } from '../../src/config/firebase';
+import { API_BASE } from '../../src/config/api';
 import Header from '../../src/components/Header';
 import PortionSelector from '../../src/components/PortionSelector';
 import ScalingWarningsModal from '../../src/components/ScalingWarningsModal';
@@ -52,13 +53,6 @@ interface AddToGroceryModalProps {
 
 
 function AddToGroceryModal({ visible, recipe, currentPortionSize, onClose, onSuccess }: AddToGroceryModalProps) {
-  // API endpoint - platform aware
-  const API_BASE = Platform.select({
-    web: 'http://localhost:3001',
-    android: 'http://10.0.2.2:3001',
-    ios: 'http://localhost:3001',
-    default: 'http://localhost:3001',
-  });
 
   const [lists, setLists] = useState<GroceryList[]>([]);
   const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
@@ -564,13 +558,6 @@ function TrackMealModal({
   selectedTrackingDate,
   setSelectedTrackingDate,
 }: TrackMealModalProps) {
-  // API endpoint - platform aware
-  const API_BASE = Platform.select({
-    web: 'http://localhost:3001',
-    android: 'http://10.0.2.2:3001',
-    ios: 'http://localhost:3001',
-    default: 'http://localhost:3001',
-  });
 
   // Date utility functions
   const getDateStringInTimezone = (date: Date, timezone: string): string => {
@@ -965,13 +952,6 @@ function EditedBanner() {
 }
 
 export default function RecipesScreen() {
-  // API endpoint - platform aware
-  const API_BASE = Platform.select({
-    web: 'http://localhost:3001',
-    android: 'http://10.0.2.2:3001',
-    ios: 'http://localhost:3001',
-    default: 'http://localhost:3001',
-  });
   const router = useRouter();
   const [recipeFilter, setRecipeFilter] = useState<'all' | 'saved'>('all');
   const [recipes, setRecipes] = useState<Recipe[]>([]);

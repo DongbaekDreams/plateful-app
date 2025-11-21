@@ -2,6 +2,7 @@
   "name": "plateful",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Plateful - Grocery management app",
   "packageManager": "npm@10.2.4",
   "workspaces": [
@@ -12,6 +13,7 @@
     "dev": "turbo run dev",
     "build": "npm run build --workspace=@plateful/shared && npm run build --workspace=@plateful/ui && npm run build --workspace=api && npm run build --workspace=mobile",
     "build:api": "npm run build --workspace=api",
+    "vercel-build": "echo 'Skipped - handled by buildCommand'",
     "clean": "turbo run clean",
     "type-check": "turbo run type-check",
     "lint": "turbo run lint",

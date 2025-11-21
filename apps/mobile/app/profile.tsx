@@ -18,7 +18,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@plateful/ui';
 import Header from '../src/components/Header';
 import { auth } from '../src/config/firebase';
+<<<<<<< HEAD
 import API_BASE from '../src/config/api';
+=======
+import { API_BASE } from '../src/config/api';
+>>>>>>> vercel2-jacob-try-boogaloo
 import type { FoodProfile } from '@plateful/shared';
 import { colors } from '@plateful/shared';
 import { Input } from '@plateful/ui';
@@ -170,7 +174,10 @@ ALL_TIMEZONES.forEach(tz => {
   TIMEZONE_OFFSETS.set(tz.value, getUTCOffset(tz.value));
 });
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> vercel2-jacob-try-boogaloo
 type TabType = 'info' | 'preferences' | 'macros';
 
 interface TagInputProps {

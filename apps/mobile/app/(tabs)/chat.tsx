@@ -19,11 +19,15 @@ import { allColors as colors } from '@plateful/shared';
 import type { ChatMessage, ChatConversation } from '@plateful/shared';
 import type { IntentExtractionResult } from '@plateful/shared';
 import { auth } from '../../src/config/firebase';
+import { API_BASE } from '../../src/config/api';
 import Header from '../../src/components/Header';
 
+<<<<<<< HEAD
 // API endpoint - platform aware
 import API_BASE from '../../src/config/api';
 
+=======
+>>>>>>> vercel2-jacob-try-boogaloo
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ editingConversationID?: string }>();
   const [conversationID, setConversationID] = useState<string | null>(null);

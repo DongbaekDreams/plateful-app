@@ -6,9 +6,8 @@ const app = new Hono();
 app.get('/', (c) => {
   return c.json({
     status: 'ok',
+    message: 'Test function works',
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    service: 'plateful-api',
   });
 });
 

@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
 import { getContainer, isCosmosAvailable, generateId } from '../lib/cosmos';
 import type { PantryItem } from '@plateful/shared';
 
@@ -247,5 +248,9 @@ app.delete('/:userID/:itemId', async (c) => {
   }
 });
 
-export default app;
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
 

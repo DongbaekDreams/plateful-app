@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
 import Anthropic from '@anthropic-ai/sdk';
 import { getContainer, generateId, isCosmosAvailable } from '../lib/cosmos';
 import type { ChatMessage, ChatConversation, ChatMessageCreateRequest, ConversationCreateRequest, FoodProfile, Recipe, RecipeData } from '@plateful/shared';
@@ -767,5 +768,9 @@ app.post('/save-edited-recipe', async (c) => {
   }
 });
 
-export default app;
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
 

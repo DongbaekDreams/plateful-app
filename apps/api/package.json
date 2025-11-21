@@ -5,7 +5,8 @@
   "packageManager": "npm@10.2.4",
   "scripts": {
     "dev": "tsx dev-server.ts",
-    "build": "tsc",
+    "build": "npm run build --workspace=@plateful/shared && tsc",
+    "vercel-build": "echo 'Skipped - handled by root buildCommand'",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf .vercel dist",
     "check-youtube": "node check-youtube-key.js",

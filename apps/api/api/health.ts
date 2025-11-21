@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 
-const app = new Hono().basePath('/api');
+const app = new Hono();
 
-app.get('/health', (c) => {
+app.get('/', (c) => {
   return c.json({
     status: 'ok',
     timestamp: new Date().toISOString(),

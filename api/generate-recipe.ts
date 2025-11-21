@@ -1,228 +1,467 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
+import { getContainer, generateId, isCosmosAvailable } from '../lib/cosmos';
+import { extractIntent } from '../services/intent-extraction';
+import { searchRecipe } from '../services/recipe-search';
+import { scrapeRecipeContent } from '../services/recipe-scraper';
+import { formatRecipe } from '../services/recipe-formatter';
+import { substituteIngredients, detectDisallowedIngredients } from '../services/ingredient-substitution';
+import type { ChatMessage, ChatConversation, Recipe, RecipeGenerateRequest, FoodProfile } from '@plateful/shared';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+const app = new Hono();
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+/**
+ * Generate a recipe from a conversation
+ * POST /generate-recipe
+ * 
+ * This endpoint implements the full flow:
+ * 1. Fetch conversation messages
+ * 2. Extract intent (dish + search query)
+ * 3. Search for recipe URL
+ * 4. Scrape recipe content
+ * 5. Format into structured JSON
+ * 6. Store in Cosmos DB
+ */
+app.post('/', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Recipe generation service not available' }, 503);
   }
 
   try {
-    const { conversationID, userID, servings = 4, dietaryRestrictions = [] } = req.body;
+    const body = await c.req.json<RecipeGenerateRequest>();
+    const { conversationID, userID } = body;
 
     if (!conversationID || !userID) {
-      return res.status(400).json({ error: 'Missing required fields: conversationID, userID' });
+      return c.json({ error: 'conversationID and userID are required' }, 400);
     }
 
-    console.log(`🔄 Generating recipe for user ${userID}, conversation ${conversationID}, servings: ${servings}`);
+    console.log(`🔄 Starting recipe generation for conversation ${conversationID}`);
 
-    // Enhanced recipe generation with serving size support and detailed nutrition
-    const enhancedRecipes = [
-      {
-        title: 'Chicken and Broccoli Stir Fry',
-        description: 'A quick and healthy stir fry with tender chicken and crisp broccoli, perfect for busy weeknights',
-        prepTime: 15,
-        cookTime: 20,
-        servings: servings,
-        difficulty: 'Easy',
-        cuisine: 'Asian',
-        ingredients: [
-          { name: 'Chicken breast', amount: `${Math.round(servings * 0.25)} lb`, category: 'Meat' },
-          { name: 'Broccoli florets', amount: `${Math.round(servings * 0.5)} cups`, category: 'Vegetables' },
-          { name: 'Vegetable oil', amount: `${Math.round(servings * 0.5)} tbsp`, category: 'Oils' },
-          { name: 'Garlic', amount: `${Math.round(servings * 0.75)} cloves`, category: 'Vegetables' },
-          { name: 'Soy sauce', amount: `${Math.round(servings * 0.5)} tbsp`, category: 'Condiments' },
-          { name: 'Oyster sauce', amount: `${Math.round(servings * 0.25)} tbsp`, category: 'Condiments' },
-          { name: 'Cornstarch', amount: `${Math.round(servings * 0.25)} tsp`, category: 'Pantry' },
-          { name: 'Salt and pepper', amount: 'to taste', category: 'Seasonings' }
-        ],
-        instructions: [
-          'Slice chicken breast into thin, bite-sized pieces',
-          'Heat oil in a large wok or skillet over high heat',
-          'Add chicken and cook until golden brown, about 5-6 minutes',
-          'Add minced garlic and cook for 30 seconds until fragrant',
-          'Add broccoli florets and stir fry for 3-4 minutes until crisp-tender',
-          'In a small bowl, mix soy sauce, oyster sauce, and cornstarch',
-          'Pour sauce over chicken and broccoli, toss to coat evenly',
-          'Cook for 1-2 minutes until sauce thickens and coats ingredients',
-          'Season with salt and pepper to taste, serve immediately over rice'
-        ],
-        nutrition: {
-          calories: Math.round(320 * (servings / 4)),
-          protein: Math.round(35 * (servings / 4)),
-          carbs: Math.round(12 * (servings / 4)),
-          fat: Math.round(14 * (servings / 4)),
-          fiber: Math.round(4 * (servings / 4)),
-          sugar: Math.round(8 * (servings / 4))
-        },
-        tags: ['quick', 'healthy', 'asian', 'stir-fry', 'high-protein', 'low-carb'],
-        imageUrl: null
-      },
-      {
-        title: 'Creamy Chicken Alfredo Pasta',
-        description: 'Rich and indulgent pasta with tender chicken in a velvety garlic parmesan sauce',
-        prepTime: 10,
-        cookTime: 25,
-        servings: servings,
-        difficulty: 'Medium',
-        cuisine: 'Italian',
-        ingredients: [
-          { name: 'Fettuccine pasta', amount: `${Math.round(servings * 3)} oz`, category: 'Grains' },
-          { name: 'Chicken breast', amount: `${Math.round(servings * 0.25)} lb`, category: 'Meat' },
-          { name: 'Butter', amount: `${Math.round(servings * 1)} tbsp`, category: 'Dairy' },
-          { name: 'Garlic', amount: `${Math.round(servings * 1)} cloves`, category: 'Vegetables' },
-          { name: 'Heavy cream', amount: `${Math.round(servings * 0.5)} cups`, category: 'Dairy' },
-          { name: 'Parmesan cheese', amount: `${Math.round(servings * 0.25)} cup`, category: 'Dairy' },
-          { name: 'Olive oil', amount: `${Math.round(servings * 0.5)} tbsp`, category: 'Oils' },
-          { name: 'Fresh parsley', amount: `${Math.round(servings * 0.5)} tbsp`, category: 'Herbs' },
-          { name: 'Salt and pepper', amount: 'to taste', category: 'Seasonings' }
-        ],
-        instructions: [
-          'Cook fettuccine pasta according to package directions until al dente',
-          'While pasta cooks, season chicken with salt and pepper, then cube',
-          'Heat olive oil in a large pan over medium-high heat',
-          'Cook chicken until golden brown and cooked through, about 6-8 minutes',
-          'Remove chicken from pan and set aside',
-          'Add butter and minced garlic to the same pan, cook for 1 minute',
-          'Pour in heavy cream and bring to a gentle simmer',
-          'Gradually stir in grated parmesan cheese until melted and smooth',
-          'Return chicken to pan and add drained pasta',
-          'Toss everything together until well coated with sauce',
-          'Garnish with fresh parsley and serve immediately'
-        ],
-        nutrition: {
-          calories: Math.round(650 * (servings / 4)),
-          protein: Math.round(28 * (servings / 4)),
-          carbs: Math.round(45 * (servings / 4)),
-          fat: Math.round(38 * (servings / 4)),
-          fiber: Math.round(2 * (servings / 4)),
-          sugar: Math.round(4 * (servings / 4))
-        },
-        tags: ['pasta', 'creamy', 'italian', 'comfort-food', 'indulgent'],
-        imageUrl: null
-      },
-      {
-        title: 'Mediterranean Quinoa Bowl',
-        description: 'A nutritious and colorful bowl packed with fresh vegetables, quinoa, and Mediterranean flavors',
-        prepTime: 20,
-        cookTime: 15,
-        servings: servings,
-        difficulty: 'Easy',
-        cuisine: 'Mediterranean',
-        ingredients: [
-          { name: 'Quinoa', amount: `${Math.round(servings * 0.25)} cups`, category: 'Grains' },
-          { name: 'Cherry tomatoes', amount: `${Math.round(servings * 0.5)} cups`, category: 'Vegetables' },
-          { name: 'Cucumber', amount: `${Math.round(servings * 0.5)} cups`, category: 'Vegetables' },
-          { name: 'Red onion', amount: `${Math.round(servings * 0.25)} small`, category: 'Vegetables' },
-          { name: 'Feta cheese', amount: `${Math.round(servings * 0.25)} cups`, category: 'Dairy' },
-          { name: 'Kalamata olives', amount: `${Math.round(servings * 0.25)} cups`, category: 'Pantry' },
-          { name: 'Olive oil', amount: `${Math.round(servings * 0.75)} tbsp`, category: 'Oils' },
-          { name: 'Lemon juice', amount: `${Math.round(servings * 0.5)} tbsp`, category: 'Pantry' },
-          { name: 'Fresh herbs', amount: `${Math.round(servings * 0.5)} tbsp`, category: 'Herbs' }
-        ],
-        instructions: [
-          'Rinse quinoa and cook according to package directions',
-          'While quinoa cooks, dice cucumber and halve cherry tomatoes',
-          'Thinly slice red onion and crumble feta cheese',
-          'Make dressing by whisking olive oil, lemon juice, salt, and pepper',
-          'Let cooked quinoa cool slightly, then fluff with a fork',
-          'Combine quinoa with vegetables, feta, and olives in a large bowl',
-          'Drizzle with dressing and toss gently to combine',
-          'Garnish with fresh herbs and serve at room temperature',
-          'Can be refrigerated for up to 3 days'
-        ],
-        nutrition: {
-          calories: Math.round(380 * (servings / 4)),
-          protein: Math.round(12 * (servings / 4)),
-          carbs: Math.round(45 * (servings / 4)),
-          fat: Math.round(18 * (servings / 4)),
-          fiber: Math.round(6 * (servings / 4)),
-          sugar: Math.round(8 * (servings / 4))
-        },
-        tags: ['healthy', 'vegetarian', 'mediterranean', 'quinoa', 'fresh', 'meal-prep'],
-        imageUrl: null
+    // Step 0: Fetch user profile (if available)
+    let profile: FoodProfile | null = null;
+    const profileContainer = getContainer('userProfiles');
+    if (profileContainer) {
+      try {
+        const { resource } = await profileContainer.item(userID, userID).read<FoodProfile>();
+        profile = resource || null;
+        if (profile) {
+          console.log(`✅ User profile found with ${profile.likes.length} likes, ${profile.allergens.length} allergens`);
+          if (profile.cookingProficiency) {
+            console.log(`👨‍🍳 Cooking proficiency: ${profile.cookingProficiency} (${['Beginner', 'Novice', 'Intermediate', 'Experienced', 'Advanced'][profile.cookingProficiency - 1]})`);
+          }
+        }
+      } catch (error) {
+        console.log(`ℹ️ No profile found for user ${userID}, proceeding without preferences`);
       }
-    ];
+    }
 
-    // Select a random recipe from the enhanced collection
-    const selectedRecipe = enhancedRecipes[Math.floor(Math.random() * enhancedRecipes.length)];
+    // Step 1: Fetch conversation messages
+    const messagesContainer = getContainer('chatMessages');
+    if (!messagesContainer) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    const { resources: messages } = await messagesContainer.items
+      .query<ChatMessage>({
+        query: 'SELECT * FROM c WHERE c.conversationID = @conversationID ORDER BY c.messageIndex ASC',
+        parameters: [{ name: '@conversationID', value: conversationID }],
+      })
+      .fetchAll();
+
+    if (messages.length === 0) {
+      return c.json({ error: 'No messages found in conversation' }, 404);
+    }
+
+    console.log(`📝 Fetched ${messages.length} messages`);
+
+    // Step 2: Extract intent
+    console.log(`🧠 Extracting intent from conversation...`);
+    const intent = await extractIntent(messages, profile);
+    console.log(`✅ Intent extracted: ${intent.dish} (status: ${intent.status})`);
+
+    // Check if conversation is off-topic
+    if (intent.status === 'off_topic') {
+      console.log(`🚫 Off-topic conversation detected`);
+      return c.json({ 
+        error: 'Off-topic conversation',
+        message: 'This conversation isn\'t about cooking or recipes. Please ask about a dish or cuisine you\'d like to make.',
+        intent
+      }, 400);
+    }
+
+    // All other statuses (broad_category, specific_dish, fully_refined) allow search
+    console.log(`✅ Intent status: ${intent.status} - proceeding with recipe generation`);
+
+    // Update conversation with extracted intent
+    const conversationContainer = getContainer('chatConversations');
+    if (conversationContainer) {
+      const { resource: conversation } = await conversationContainer
+        .item(conversationID, conversationID)
+        .read<ChatConversation>();
+
+      if (conversation) {
+        conversation.decidedDish = intent.dish;
+        conversation.searchQuery = intent.searchQuery;
+        conversation.status = 'decided';
+        conversation.updatedAt = new Date().toISOString();
+        await conversationContainer.item(conversationID, conversationID).replace(conversation);
+      }
+    }
+
+    // Step 3: Search for recipes (multiple options)
+    console.log(`🔍 Searching for recipes: ${intent.searchQuery}`);
+    const searchResults = await searchRecipe(intent.searchQuery, profile);
+    console.log(`✅ Found ${searchResults.length} recipe options`);
+
+    // Step 4: Try scraping each recipe URL until one succeeds
+    console.log(`📄 Attempting to scrape recipe content...`);
+    let recipeData;
+    let successfulUrl: string | null = null;
+    let lastError: Error | null = null;
     
-    // Create the recipe object in the format expected by the recipe storage system
-    const recipeData = {
-      title: selectedRecipe.title,
-      description: selectedRecipe.description,
-      ingredients: selectedRecipe.ingredients,
-      instructions: selectedRecipe.instructions,
-      prepTime: selectedRecipe.prepTime,
-      cookTime: selectedRecipe.cookTime,
-      servings: selectedRecipe.servings,
-      difficulty: selectedRecipe.difficulty,
-      cuisine: selectedRecipe.cuisine,
-      nutrition: selectedRecipe.nutrition,
-      tags: selectedRecipe.tags,
-      imageUrl: selectedRecipe.imageUrl
-    };
+    for (let i = 0; i < searchResults.length; i++) {
+      const searchResult = searchResults[i];
+      const domain = new URL(searchResult.url).hostname;
+      console.log(`\n🔄 Trying recipe ${i + 1}/${searchResults.length}: ${searchResult.title} (${domain})`);
+      
+      try {
+        const scrapeResult = await scrapeRecipeContent(searchResult.url, true);
+        
+        // Validate that we got meaningful content
+        if (!scrapeResult.content || scrapeResult.content.length < 200) {
+          throw new Error(`Scraped content too short (${scrapeResult.content?.length || 0} chars), likely failed`);
+        }
+        
+        console.log(`✅ Successfully scraped ${scrapeResult.content.length} characters from ${domain}`);
+        if (scrapeResult.imageUrl) {
+          console.log(`✅ Extracted image: ${scrapeResult.imageUrl}`);
+        }
 
-    // Save the recipe to the recipe storage system
-    console.log('💾 Saving generated recipe to storage...');
-    try {
-      const saveResponse = await fetch(`${req.headers.host?.includes('localhost') ? 'http://localhost:3000' : 'https://plateful-r73ybwu6f-elisha-theetlas-projects.vercel.app'}/api/recipe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userID: userID,
-          ...recipeData
-        }),
-      });
+        // Step 5: Format recipe
+        console.log(`🎨 Formatting recipe data...`);
+        recipeData = await formatRecipe(scrapeResult.content, searchResult.url, profile);
+        
+        // Add image URL if extracted
+        if (scrapeResult.imageUrl) {
+          recipeData.imageUrl = scrapeResult.imageUrl;
+        }
 
-      if (!saveResponse.ok) {
-        console.error('❌ Failed to save recipe to storage:', saveResponse.status, saveResponse.statusText);
-        // Continue anyway - we'll still return the recipe even if saving fails
-      } else {
-        const savedRecipe = await saveResponse.json();
-        console.log('✅ Recipe saved to storage:', savedRecipe.recipe?.id);
+        // Step 5.5: Check for disallowed ingredients and substitute if needed
+        if (profile && (profile.allergens?.length > 0 || profile.restrictions?.length > 0)) {
+          const disallowed = detectDisallowedIngredients(recipeData, profile);
+          
+          if (disallowed.length > 0) {
+            console.log(`⚠️ Recipe contains ${disallowed.length} disallowed ingredient(s), attempting substitutions...`);
+            
+            try {
+              const substitutionResult = await substituteIngredients(recipeData, profile);
+              recipeData = substitutionResult.recipeData;
+              
+              if (substitutionResult.substitutions.length > 0) {
+                console.log(`✅ Successfully substituted ${substitutionResult.substitutions.length} ingredient(s)`);
+              } else {
+                console.log(`ℹ️ No substitutions were made (may have been filtered out during search)`);
+              }
+            } catch (subError) {
+              console.warn(`❌ Failed to substitute ingredients: ${subError instanceof Error ? subError.message : 'Unknown error'}`);
+              // If substitution fails, try next recipe (don't return unsafe recipe)
+              lastError = subError instanceof Error ? subError : new Error(String(subError));
+              continue;
+            }
+          }
+        }
+        
+        successfulUrl = searchResult.url;
+        console.log(`✅ Recipe formatted successfully: ${recipeData.title}`);
+        break; // Success! Exit the loop
+        
+      } catch (scrapeError) {
+        lastError = scrapeError instanceof Error ? scrapeError : new Error(String(scrapeError));
+        console.warn(`❌ Failed to scrape ${domain}: ${lastError.message}`);
+        // Continue to next URL
       }
-    } catch (saveError) {
-      console.error('❌ Error saving recipe to storage:', saveError);
-      // Continue anyway - we'll still return the recipe even if saving fails
+    }
+    
+    // If all URLs failed, throw error (don't create fallback)
+    if (!recipeData || !successfulUrl) {
+      const errorMessage = `Failed to scrape any of the ${searchResults.length} recipe URLs. Last error: ${lastError?.message || 'Unknown error'}`;
+      console.error(`❌ ${errorMessage}`);
+      return c.json({ 
+        error: 'Failed to retrieve recipe',
+        message: 'Unable to access any recipe websites. Please try again later or with a different dish.',
+        details: errorMessage,
+        attemptedUrls: searchResults.map(r => r.url)
+      }, 500);
     }
 
-    // Create the response recipe object with a unique ID
-    const responseRecipe = {
-      id: `recipe-${Date.now()}`,
-      ...recipeData,
-      createdAt: new Date().toISOString()
-    };
+    // Step 6: Check for duplicate recipe
+    const recipesContainer = getContainer('recipes');
+    if (!recipesContainer) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
 
-    // Mock intent that matches the recipe
-    const intent = {
-      dish: selectedRecipe.title,
-      cuisine: selectedRecipe.cuisine,
-      certaintyLevel: 'high',
-      status: 'recipe_ready'
-    };
+    const sourceUrlLower = successfulUrl.toLowerCase();
+    const { resources: existingRecipes } = await recipesContainer.items
+      .query<Recipe>({
+        query: 'SELECT * FROM c WHERE c.userID = @userID AND c.sourceUrlLower = @sourceUrlLower',
+        parameters: [
+          { name: '@userID', value: userID },
+          { name: '@sourceUrlLower', value: sourceUrlLower }
+        ],
+      })
+      .fetchAll();
 
-    console.log('✅ Recipe generated successfully:', responseRecipe.title);
+    let recipe: Recipe;
 
-    return res.status(200).json({
-      recipe: responseRecipe,
-      intent: intent,
-      success: true,
-      message: `Recipe generated successfully for ${servings} serving${servings !== 1 ? 's' : ''}`
-    });
+    if (existingRecipes.length > 0) {
+      // Recipe already exists, link it to this conversation
+      recipe = existingRecipes[0];
+      console.log(`♻️ Recipe already exists, linking to conversation`);
+      
+      if (!recipe.conversationID) {
+        recipe.conversationID = conversationID;
+        await recipesContainer.item(recipe.id, userID).replace(recipe);
+      }
+    } else {
+      // Create new recipe
+      const recipeID = generateId('recipe');
+      const now = new Date().toISOString();
+
+      recipe = {
+        id: recipeID,
+        userID,
+        recipeID,
+        recipeNameLower: recipeData.title.toLowerCase(),
+        sourceUrlLower,
+        conversationID,
+        recipeData,
+        isSaved: false,
+        createdAt: now,
+        updatedAt: now,
+        hasSubstitutions: (recipeData.substitutions && recipeData.substitutions.length > 0) || false,
+      };
+
+      await recipesContainer.items.create(recipe);
+      console.log(`✅ Recipe stored with ID: ${recipeID}${recipe.hasSubstitutions ? ' (with substitutions)' : ''}`);
+    }
+
+    // Update conversation with recipe link
+    if (conversationContainer) {
+      const { resource: conversation } = await conversationContainer
+        .item(conversationID, conversationID)
+        .read<ChatConversation>();
+
+      if (conversation) {
+        conversation.recipeID = recipe.recipeID;
+        conversation.status = 'recipe_found';
+        conversation.updatedAt = new Date().toISOString();
+        await conversationContainer.item(conversationID, conversationID).replace(conversation);
+      }
+    }
+
+    console.log(`🎉 Recipe generation complete!`);
+
+    // Find the successful search result for the response
+    const successfulSearchResult = searchResults.find(r => r.url === successfulUrl) || searchResults[0];
+
+    return c.json({ 
+      recipe,
+      intent,
+      searchResult: successfulSearchResult
+    }, 201);
 
   } catch (error) {
-    console.error('❌ Generate recipe API error:', error);
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('❌ Recipe generation error:', error);
+    return c.json({ 
+      error: 'Failed to generate recipe',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
   }
-}
+});
+
+/**
+ * Get recipes for a user
+ * GET /recipes/user/:userID
+ */
+app.get('/user/:userID', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Recipe service not available' }, 503);
+  }
+
+  try {
+    const userID = c.req.param('userID');
+    const container = getContainer('recipes');
+    
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    // Support filtering by saved status
+    const savedOnly = c.req.query('saved') === 'true';
+    
+    let query = 'SELECT * FROM c WHERE c.userID = @userID';
+    const parameters: any[] = [{ name: '@userID', value: userID }];
+    
+    if (savedOnly) {
+      query += ' AND c.isSaved = true';
+    }
+    
+    query += ' ORDER BY c.createdAt DESC';
+
+    const { resources: recipes } = await container.items
+      .query<Recipe>({
+        query,
+        parameters,
+      })
+      .fetchAll();
+
+    return c.json({ recipes });
+  } catch (error) {
+    console.error('Error fetching recipes:', error);
+    return c.json({ error: 'Failed to fetch recipes' }, 500);
+  }
+});
+
+/**
+ * Get a specific recipe
+ * GET /recipes/:recipeID
+ */
+app.get('/:recipeID', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Recipe service not available' }, 503);
+  }
+
+  try {
+    const recipeID = c.req.param('recipeID');
+    const userID = c.req.query('userID');
+
+    if (!userID) {
+      return c.json({ error: 'userID query parameter is required' }, 400);
+    }
+
+    const container = getContainer('recipes');
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    const { resource: recipe } = await container
+      .item(recipeID, userID)
+      .read<Recipe>();
+
+    if (!recipe) {
+      return c.json({ error: 'Recipe not found' }, 404);
+    }
+
+    return c.json({ recipe });
+  } catch (error) {
+    console.error('Error fetching recipe:', error);
+    return c.json({ error: 'Failed to fetch recipe' }, 500);
+  }
+});
+
+/**
+ * Save/unsave a recipe or update user portion size
+ * PATCH /recipes/:recipeID
+ */
+app.patch('/:recipeID', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Recipe service not available' }, 503);
+  }
+
+  try {
+    const recipeID = c.req.param('recipeID');
+    const { userID, isSaved, userPortionSize } = await c.req.json();
+
+    if (!userID) {
+      return c.json({ error: 'userID is required' }, 400);
+    }
+
+    const container = getContainer('recipes');
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    const { resource: recipe } = await container
+      .item(recipeID, userID)
+      .read<Recipe>();
+
+    if (!recipe) {
+      return c.json({ error: 'Recipe not found' }, 404);
+    }
+
+    if (typeof isSaved === 'boolean') {
+      recipe.isSaved = isSaved;
+    }
+
+    if (typeof userPortionSize === 'number' && userPortionSize > 0) {
+      recipe.userPortionSize = userPortionSize;
+    } else if (userPortionSize === null || userPortionSize === undefined) {
+      // Allow clearing userPortionSize by sending null
+      delete recipe.userPortionSize;
+    }
+
+    recipe.updatedAt = new Date().toISOString();
+
+    await container.item(recipeID, userID).replace(recipe);
+
+    return c.json({ recipe });
+  } catch (error) {
+    console.error('Error updating recipe:', error);
+    return c.json({ error: 'Failed to update recipe' }, 500);
+  }
+});
+
+/**
+ * Delete a recipe
+ * DELETE /recipes/:recipeID
+ */
+app.delete('/:recipeID', async (c) => {
+  if (!isCosmosAvailable()) {
+    return c.json({ error: 'Recipe service not available' }, 503);
+  }
+
+  try {
+    const recipeID = c.req.param('recipeID');
+    const userID = c.req.query('userID');
+
+    if (!userID) {
+      return c.json({ error: 'userID query parameter is required' }, 400);
+    }
+
+    const container = getContainer('recipes');
+    if (!container) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    // Verify recipe exists and belongs to user
+    const { resource: recipe } = await container
+      .item(recipeID, userID)
+      .read<Recipe>();
+
+    if (!recipe) {
+      return c.json({ error: 'Recipe not found' }, 404);
+    }
+
+    // Verify ownership
+    if (recipe.userID !== userID) {
+      return c.json({ error: 'Unauthorized: Recipe does not belong to user' }, 403);
+    }
+
+    // Delete the recipe
+    await container.item(recipeID, userID).delete();
+
+    console.log(`✅ Recipe deleted: ${recipeID}`);
+
+    return c.json({ message: 'Recipe deleted successfully' }, 200);
+  } catch (error) {
+    console.error('Error deleting recipe:', error);
+    return c.json({ error: 'Failed to delete recipe' }, 500);
+  }
+});
+
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
+

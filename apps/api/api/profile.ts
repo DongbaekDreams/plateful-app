@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
 import { getContainer, isCosmosAvailable } from '../lib/cosmos';
 import type { FoodProfile } from '@plateful/shared';
 
@@ -122,5 +123,9 @@ app.put('/:userID', async (c) => {
   }
 });
 
-export default app;
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
 

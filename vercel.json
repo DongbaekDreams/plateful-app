@@ -1,8 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci --workspaces --include-workspace-root",
+  "buildCommand": "npm run build --workspace=@plateful/shared && node build-api.js",
   "functions": {
-    "api/*.ts": {
-      "runtime": "@vercel/node@3.2.0"
+    "api/**/*.ts": {
+      "maxDuration": 30
     }
   }
 }

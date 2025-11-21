@@ -1,28 +1,46 @@
 import { Platform } from 'react-native';
 
-// Production API URL
-const PRODUCTION_API_URL = 'https://plateful-r73ybwu6f-elisha-theetlas-projects.vercel.app';
+/**
+ * Get the API base URL based on environment configuration
+ * 
+ * Environment variables:
+ * - EXPO_PUBLIC_API_MODE: "local" | "hosted" (defaults to "local")
+ * - EXPO_PUBLIC_API_BASE_URL: Direct URL override (optional, overrides API_MODE if set)
+ * 
+ * When "local":
+ * - Web/iOS: http://localhost:3001
+ * - Android emulator: http://10.0.2.2:3001
+ * 
+ * When "hosted":
+ * - All platforms: https://plateful-app-cartwrightjacob-5796s-projects.vercel.app/api
+ */
+export const getApiBaseUrl = (): string => {
+  // Check for direct URL override first
+  const directUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (directUrl) {
+    return directUrl;
+  }
 
-// Development API URLs
-const DEVELOPMENT_API_URLS = {
-  web: 'http://localhost:3001',
-  android: 'http://10.0.2.2:3001',
-  ios: 'http://localhost:3001',
-  default: 'http://localhost:3001',
+  // Check API mode
+  const apiMode = process.env.EXPO_PUBLIC_API_MODE || 'local';
+
+  if (apiMode === 'hosted') {
+    // Use Vercel hosted URL (production alias - cleaner URL)
+    return 'https://plateful-app-cartwrightjacob-5796s-projects.vercel.app/api';
+  }
+
+  // Default to local development
+  // Platform-specific URLs for local development
+  return Platform.select({
+    web: 'http://localhost:3001',
+    android: 'http://10.0.2.2:3001', // Android emulator uses special IP
+    ios: 'http://localhost:3001',
+    default: 'http://localhost:3001',
+  }) || 'http://localhost:3001';
 };
 
-// Determine if we're in development or production
-const isDevelopment = __DEV__;
+/**
+ * API base URL - use this constant throughout the app
+ */
+export const API_BASE = getApiBaseUrl();
 
-// Force production API for now since we don't have local API server running
-export const API_BASE = PRODUCTION_API_URL;
-
-// Debug: Log the API base URL being used
-console.log('🌐 API_BASE configured as:', API_BASE);
-
-// Original logic (commented out):
-// export const API_BASE = isDevelopment
-//   ? Platform.select(DEVELOPMENT_API_URLS)
-//   : PRODUCTION_API_URL;
-
-export default API_BASE;

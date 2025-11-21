@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
 import Anthropic from '@anthropic-ai/sdk';
 
 const app = new Hono();
@@ -8,7 +9,7 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY 
 });
 
-app.post('/recipe', async (c) => {
+app.post('/', async (c) => {
   try {
     const { dish } = await c.req.json();
     
@@ -60,4 +61,8 @@ app.post('/recipe', async (c) => {
   }
 });
 
-export default app;
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);

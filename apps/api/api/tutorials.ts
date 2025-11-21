@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
 import { getContainer, generateId, isCosmosAvailable } from '../lib/cosmos';
 import { searchYouTubeTutorials } from '../services/youtube-search';
 import { searchWrittenTutorials } from '../services/tutorial-search';
@@ -171,7 +172,11 @@ app.get('/scrape', async (c) => {
     return c.json({
       error: errorMessage,
       details: error.message || 'Unknown error'
+<<<<<<< HEAD
     }, statusCode as any);
+=======
+    }, statusCode as 403 | 404 | 422 | 500 | 504);
+>>>>>>> vercel2-jacob-try-boogaloo
   }
 });
 
@@ -386,5 +391,9 @@ app.delete('/:userID/:tutorialID', async (c) => {
   }
 });
 
-export default app;
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
 

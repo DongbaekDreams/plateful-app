@@ -1,61 +1,57 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
+import { extractIntent } from '../services/intent-extraction';
+import { getContainer } from '../lib/cosmos';
+import type { ChatMessage } from '@plateful/shared';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+const app = new Hono();
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+interface ExtractIntentRequest {
+  conversationID: string;
+  userID: string;
+}
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+app.post('/', async (c) => {
   try {
-    const { conversationID, userID } = req.body;
+    const body = await c.req.json<ExtractIntentRequest>();
+    const { conversationID, userID } = body;
 
     if (!conversationID || !userID) {
-      return res.status(400).json({ error: 'Missing required fields: conversationID, userID' });
+      return c.json({ error: 'conversationID and userID are required' }, 400);
     }
 
-    // Mock intent extraction - in a real app this would analyze the conversation
-    const mockIntents = [
-      {
-        dish: 'Chicken Stir Fry',
-        cuisine: 'Asian',
-        certaintyLevel: 'high',
-        status: 'recipe_ready',
-        explanation: 'I can see you want to make a chicken stir fry with vegetables'
-      },
-      {
-        dish: 'Pasta Dish',
-        cuisine: 'Italian',
-        certaintyLevel: 'medium',
-        status: 'recipe_ready',
-        explanation: 'It looks like you\'re interested in making a pasta dish'
-      },
-      {
-        dish: 'Healthy Meal',
-        cuisine: 'General',
-        certaintyLevel: 'low',
-        status: 'recipe_ready',
-        explanation: 'You mentioned wanting something healthy - let me suggest some options'
-      }
-    ];
+    console.log(`🧠 Extracting intent for conversation ${conversationID}`);
 
-    // Return a random mock intent
-    const randomIntent = mockIntents[Math.floor(Math.random() * mockIntents.length)];
+    // Fetch conversation messages
+    const messagesContainer = getContainer('chatMessages');
+    if (!messagesContainer) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
 
-    return res.status(200).json(randomIntent);
+    const { resources: messages } = await messagesContainer.items
+      .query<ChatMessage>({
+        query: 'SELECT * FROM c WHERE c.conversationID = @conversationID ORDER BY c.messageIndex ASC',
+        parameters: [{ name: '@conversationID', value: conversationID }],
+      })
+      .fetchAll();
 
+    if (messages.length === 0) {
+      return c.json({ error: 'No messages found in conversation' }, 404);
+    }
+
+    // Extract intent
+    const intent = await extractIntent(messages);
+    console.log(`✅ Intent extracted: ${intent.dish} (status: ${intent.status})`);
+
+    return c.json(intent);
   } catch (error) {
-    console.error('Extract intent API error:', error);
-    return res.status(500).json({ 
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('❌ Failed to extract intent:', error);
+    return c.json({ error: 'Failed to extract intent from conversation' }, 500);
   }
-}
+});
+
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);

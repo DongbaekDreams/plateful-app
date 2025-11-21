@@ -289,7 +289,32 @@ FIGMA_FILE_ID=YL6JUI6MAovP38M7iF7Xbw
 
 ✅ **Security Note:** `EXPO_PUBLIC_*` variables are bundled into the app. This is safe for Firebase config (protected by security rules), but never put actual secrets here.
 
-#### **3.2: API Configuration** (Optional)
+#### **3.2: API Base URL Configuration**
+
+Configure whether to use local development server or hosted Vercel API:
+
+```bash
+# In apps/mobile/.env
+# Option 1: Use local development server (default)
+EXPO_PUBLIC_API_MODE=local
+
+# Option 2: Use hosted Vercel API
+EXPO_PUBLIC_API_MODE=hosted
+
+# Option 3: Direct URL override (optional)
+EXPO_PUBLIC_API_BASE_URL=https://your-custom-api-url.com/api
+```
+
+**API Mode Options:**
+- `local` (default): Uses `http://localhost:3001` (or `http://10.0.2.2:3001` for Android emulator)
+- `hosted`: Uses `https://plateful-app.vercel.app/api`
+- Direct URL: Overrides mode if `EXPO_PUBLIC_API_BASE_URL` is set
+
+**Platform-Specific Local URLs:**
+- Web/iOS: `http://localhost:3001`
+- Android Emulator: `http://10.0.2.2:3001` (special IP for emulator)
+
+#### **3.3: API Configuration** (Optional)
 
 Only needed if deploying Vercel functions:
 
@@ -697,6 +722,11 @@ eas submit --platform android
 
 ### API Deployment (Vercel)
 
+#### **Prerequisites**
+
+- Vercel account (Pro plan recommended for better performance)
+- Vercel CLI installed: `npm install -g vercel`
+
 #### **First-Time Setup**
 
 ```bash
@@ -712,31 +742,123 @@ vercel
 # - Setup and deploy? Yes
 # - Which scope? [Your account]
 # - Link to existing project? No
-# - Project name? plateful-api
+# - Project name? plateful-app (or your project name)
 # - In which directory? ./
 # - Override settings? No
 ```
 
-#### **Configure Environment Variables**
+#### **Vercel Configuration**
+
+The project includes two Vercel configuration files:
+
+1. **Root `vercel.json`**: Routes API requests to serverless functions
+2. **`apps/api/vercel.json`**: Configures serverless function runtime and settings
+
+**Key Configuration:**
+- Runtime: Node.js 18.x
+- Max Duration: 30 seconds (Pro plan)
+- Functions: All files in `apps/api/api/**/*.ts` are deployed as serverless functions
+
+#### **Environment Variables on Vercel**
+
+Set environment variables in Vercel Dashboard:
+
+1. Go to your project → **Settings** → **Environment Variables**
+2. Add the following variables for **Production**, **Preview**, and **Development**:
 
 ```bash
-# Via Vercel Dashboard:
-# 1. Project Settings → Environment Variables
-# 2. Add for: Production, Preview, Development
-# 3. Required variables:
-#    - FIREBASE_PROJECT_ID
-#    - FIREBASE_PRIVATE_KEY
-#    - FIREBASE_CLIENT_EMAIL
+# Required for API functions
+ANTHROPIC_API_KEY=sk-ant-api03-...
+YOUTUBE_API_KEY=your-youtube-api-key
+
+# Optional: Azure Cosmos DB (for chat/recipe storage)
+COSMOS_ENDPOINT=https://your-account.documents.azure.com:443/
+COSMOS_KEY=your-cosmos-db-primary-key
+
+# Optional: Firebase Admin SDK (if using server-side Firebase)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-...@your-project.iam.gserviceaccount.com
 ```
 
-#### **Production Deployment**
+**Via CLI:**
+```bash
+cd apps/api
+
+# Set environment variable
+vercel env add ANTHROPIC_API_KEY production
+
+# List all environment variables
+vercel env ls
+```
+
+#### **Deploying Updates**
 
 ```bash
+cd apps/api
+
 # Deploy to production
 vercel --prod
 
-# Verify
-curl https://your-project.vercel.app/api/health
+# Or deploy preview (for testing)
+vercel
+```
+
+#### **Testing Deployment**
+
+After deployment, test your API endpoints:
+
+```bash
+# Health check
+curl https://plateful-app.vercel.app/api/health
+
+# Example: Test chat endpoint (replace with your actual endpoint)
+curl -X POST https://plateful-app.vercel.app/api/chat/conversation \
+  -H "Content-Type: application/json" \
+  -d '{"userID": "test-user"}'
+```
+
+#### **Local vs Hosted API Toggle**
+
+The mobile app can switch between local and hosted API:
+
+**For Local Development:**
+```bash
+# In apps/mobile/.env
+EXPO_PUBLIC_API_MODE=local
+```
+
+**For Production/Testing Hosted API:**
+```bash
+# In apps/mobile/.env
+EXPO_PUBLIC_API_MODE=hosted
+```
+
+The app will automatically use:
+- Local: `http://localhost:3001` (or `http://10.0.2.2:3001` for Android emulator)
+- Hosted: `https://plateful-app.vercel.app/api`
+
+#### **Troubleshooting Vercel Deployment**
+
+**Common Issues:**
+
+1. **Build fails:**
+   ```bash
+   # Check build logs
+   vercel logs [deployment-url]
+   
+   # Ensure TypeScript compiles
+   cd apps/api
+   npm run build
+   ```
+
+2. **Function timeout:**
+   - Check `apps/api/vercel.json` for `maxDuration` setting
+   - Pro plan allows up to 300 seconds
+
+3. **Environment variables not working:**
+   - Ensure variables are set for correct environment (Production/Preview/Development)
+   - Redeploy after adding new variables: `vercel --prod`
 
 # Expected: {"status":"ok","timestamp":"..."}
 ```
