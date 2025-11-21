@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { extractIntent } from '../services/intent-extraction';
 import { getContainer } from '../lib/cosmos';
-import type { ChatMessage } from '../../../packages/shared/src/types/chat';
+import type { ChatMessage } from '../types/chat';
 
 const app = new Hono();
 

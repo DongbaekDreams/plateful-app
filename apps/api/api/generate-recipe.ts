@@ -6,9 +6,9 @@ import { searchRecipe } from '../services/recipe-search';
 import { scrapeRecipeContent } from '../services/recipe-scraper';
 import { formatRecipe } from '../services/recipe-formatter';
 import { substituteIngredients, detectDisallowedIngredients } from '../services/ingredient-substitution';
-import type { ChatMessage, ChatConversation } from '../../../packages/shared/src/types/chat';
-import type { Recipe, RecipeGenerateRequest } from '../../../packages/shared/src/types/recipe';
-import type { FoodProfile } from '../../../packages/shared/src/types/user';
+import type { ChatMessage, ChatConversation } from '../types/chat';
+import type { Recipe, RecipeGenerateRequest } from '../types/recipe';
+import type { FoodProfile } from '../types/user';
 
 const app = new Hono();
 

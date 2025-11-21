@@ -2,9 +2,9 @@ import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import Anthropic from '@anthropic-ai/sdk';
 import { getContainer, generateId, isCosmosAvailable } from '../lib/cosmos';
-import type { ChatMessage, ChatConversation, ChatMessageCreateRequest, ConversationCreateRequest } from '../../../packages/shared/src/types/chat';
-import type { FoodProfile } from '../../../packages/shared/src/types/user';
-import type { Recipe, RecipeData } from '../../../packages/shared/src/types/recipe';
+import type { ChatMessage, ChatConversation, ChatMessageCreateRequest, ConversationCreateRequest } from '../types/chat';
+import type { FoodProfile } from '../types/user';
+import type { Recipe, RecipeData } from '../types/recipe';
 
 const app = new Hono();
 

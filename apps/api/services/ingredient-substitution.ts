@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { RecipeData, IngredientSubstitution } from '../../../../packages/shared/src/types/recipe';
-import type { FoodProfile } from '../../../../packages/shared/src/types/user';
+import type { RecipeData, IngredientSubstitution } from '../types/recipe';
+import type { FoodProfile } from '../types/user';
 
 /**
  * Detect if any ingredients in the recipe match user's allergens or restrictions

@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import type { YouTubeTutorial } from '../../../../packages/shared/src/types/tutorial';
+import type { YouTubeTutorial } from '../types/tutorial';
 
 /**
  * Search for cooking tutorial videos on YouTube

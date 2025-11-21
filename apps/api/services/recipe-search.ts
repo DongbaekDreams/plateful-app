@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { RecipeSearchResult } from '../../../../packages/shared/src/types/recipe';
-import type { FoodProfile } from '../../../../packages/shared/src/types/user';
+import type { RecipeSearchResult } from '../types/recipe';
+import type { FoodProfile } from '../types/user';
 
 /**
  * Search for recipes using Anthropic's web search

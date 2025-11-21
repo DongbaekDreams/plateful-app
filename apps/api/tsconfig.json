@@ -24,6 +24,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    ".vercel"
+    ".vercel",
+    "dev-server.ts",
+    "**/*.test.ts"
   ]
 }
